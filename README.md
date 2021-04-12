@@ -1,3 +1,43 @@
+# Why the fork?
+
+Package `s3-image-uploader` was used in a long-lived project. The project was upgraded from node v 10.x to node v 14.x. Running the project code then broke with this error message:
+
+```
+ReferenceError: primordials is not defined
+    at fs.js:36:5
+    at req_ (/home/fullStackOasis/project/node_modules/natives/index.js:143:24)
+    at Object.req [as require] (/home/fullStackOasis/project/node_modules/natives/index.js:55:10)
+    at Object.<anonymous> (/home/fullStackOasis/project/node_modules/s3/node_modules/graceful-fs/fs.js:1:37)
+    at Module._compile (internal/modules/cjs/loader.js:999:30)
+    at Object.Module._extensions..js (internal/modules/cjs/loader.js:1027:10)
+    at Module.load (internal/modules/cjs/loader.js:863:32)
+    at Function.Module._load (internal/modules/cjs/loader.js:708:14)
+    at Module.require (internal/modules/cjs/loader.js:887:19)
+    at require (internal/modules/cjs/helpers.js:74:18)
+    at Object.<anonymous> (/home/fullStackOasis/project/node_modules/s3/node_modules/graceful-fs/graceful-fs.js:3:27)
+    at Module._compile (internal/modules/cjs/loader.js:999:30)
+    at Object.Module._extensions..js (internal/modules/cjs/loader.js:1027:10)
+    at Module.load (internal/modules/cjs/loader.js:863:32)
+    at Function.Module._load (internal/modules/cjs/loader.js:708:14)
+```
+
+I used `npm ls` to find out where the module `natives` was being used, and found this:
+
+```
+npm ls natives
+project@1.0.0 /home/fullStackOasis/project
+└─┬ s3-image-uploader@1.0.7
+  └─┬ s3@4.2.0
+    └─┬ graceful-fs@3.0.12
+      └── natives@1.1.6
+```
+
+Module `s3` is currently at version 4.4.0 - 5 years ago, the most recent update! - and our package was using 4.2.0. Version 4.4.0 of `s3` uses graceful-fs ~4.1.4. Our version used graceful-fs 3.0.12, [which just happened to unfortunately use `natives`](https://github.com/isaacs/node-graceful-fs/pull/172/commits/446f079783a209e200d89d7f314c7b7dce5e1cfb).
+
+There are different ways to go with this, but seeing as how neither `s3` nor `s3-image-uploader` seem to be maintained, it looked like the best solution was to fork `s3-image-uploader`, and change `package.json` so it points to a version of `s3` maintained by `auth0` that contains a fix. Now we use this fork in our own code. That gets rid of our problem.
+
+If this helps you, feel free to use it. The only change made was to `package.json`.
+
 #s3-image-uploader
 
 [![npm](https://img.shields.io/npm/v/s3-image-uploader.svg)]()
